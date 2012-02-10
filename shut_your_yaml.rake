@@ -1,4 +1,5 @@
 require 'yaml'
+require 'ya2yaml'
 
 namespace :db do
   task :config do
@@ -64,8 +65,9 @@ namespace :db do
           current_config.each do |key,val|
             print "Current val for #{key} is #{val}. Press [Enter] to keep or type in your val: "
             new_val = STDIN.gets
-            new_val = val.to_s if new_val == "\n"
-            current_config.merge!({key => new_val.chomp})
+            new_val = val if new_val == "\n"
+            new_val.chomp! if new_val.is_a?(String)
+            current_config.merge!({key => new_val})
           end
           # Ask the user if they'd like to add more values
           begin
@@ -168,20 +170,7 @@ namespace :db do
       return {name => current_config}
     end
     
-    # Shamelessly stolen from http://iain.nl/writing-yaml-files
-    def yaml(hash)
-      method = hash.respond_to?(:ya2yaml) ? :ya2yaml : :to_yaml
-      string = hash.deep_stringify_keys.send(method)
-      string.gsub("!ruby/symbol ", ":").sub("---","").split("\n").map(&:rstrip).join("\n").strip
-    end
-    class Hash
-      def deep_stringify_keys
-        new_hash = {}
-        self.each do |key, value|
-          new_hash.merge!(key.to_s => (value.respond_to?('deep_stringify_keys') ? value.deep_stringify_keys : value))
-        end
-      end
-    end
+   
     
     # Flow of this task
     # 1) Check for config/database.yml
@@ -304,11 +293,25 @@ namespace :db do
     end while user_choice == 'y'
     
     # Step (6)
+    # Delete the file if it exists
     if File.exists?('config/database.yml')
       File.delete('config/database.yml')
     end
+    
+    # Convert the vals to the proper number type if necessary.  For whatever reason ya2yaml will otherwise put quotes around it (but not other "strings")
+    configuration_data.each do |env_name,config_vals|
+      new_data = {}
+      config_vals.each do |key,val|
+        val = val.to_i if val.to_i.to_s == val
+        val = val.to_f if val.to_f.to_s == val
+        
+        new_data.merge!({key=>val})
+      end
+      configuration_data.merge!({ env_name => new_data })
+    end
+    
     File.open('config/database.yml', "w") do |f|
-      f.write(yaml(configuration_data))
+      f.write(configuration_data.ya2yaml.gsub("!ruby/symbol ", ":").sub("---","").split("\n").map(&:rstrip).join("\n").strip)
     end
   end
 end
