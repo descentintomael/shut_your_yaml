@@ -168,6 +168,21 @@ namespace :db do
       return {name => current_config}
     end
     
+    # Shamelessly stolen from http://iain.nl/writing-yaml-files
+    def yaml(hash)
+      method = hash.respond_to?(:ya2yaml) ? :ya2yaml : :to_yaml
+      string = hash.deep_stringify_keys.send(method)
+      string.gsub("!ruby/symbol ", ":").sub("---","").split("\n").map(&:rstrip).join("\n").strip
+    end
+    class Hash
+      def deep_stringify_keys
+        new_hash = {}
+        self.each do |key, value|
+          new_hash.merge!(key.to_s => (value.respond_to?('deep_stringify_keys') ? value.deep_stringify_keys : value))
+        end
+      end
+    end
+    
     # Flow of this task
     # 1) Check for config/database.yml
     #   a) if exists, delete it?
@@ -184,9 +199,11 @@ namespace :db do
     #   a) same as (3a)
     # 5) Offer to add in any custom named configurations
     #   a) same as (3a)
+    # 6) Write the file out to the file system
+    # TODO: create a backup of the YAML file before editing
     
     # Step (1)
-    if File.exists?('config/database.yml')
+    if File.exists?('config/database.yml') and !File.zero?('config/database.yml')
       puts "Your database.yml file already exists."
       puts "1) delete current configuration file"
       puts "2) modify current configuration file"
@@ -255,7 +272,7 @@ namespace :db do
       puts "The configuration doesn't have a development environment, would you like to add it?"
       user_choice = get_user_input(['y','n'])
       if user_choice == 'y'
-        setup_configuration("development", {})
+        configuration_data.merge!(setup_configuration("development", {}))
       end
     end
     
@@ -264,7 +281,7 @@ namespace :db do
       puts "The configuration doesn't have a test environment, would you like to add it?"
       user_choice = get_user_input(['y','n'])
       if user_choice == 'y'
-        setup_configuration("test", {})
+        configuration_data.merge!(setup_configuration("test", {}))
       end
     end
     
@@ -273,7 +290,7 @@ namespace :db do
       puts "The configuration doesn't have a production environment, would you like to add it?"
       user_choice = get_user_input(['y','n'])
       if user_choice == 'y'
-        setup_configuration("development", {})
+        configuration_data.merge!(setup_configuration("production", {}))
       end
     end
     
@@ -282,8 +299,16 @@ namespace :db do
       puts "Would you like to add another configuration environment?"
       user_choice = get_user_input(['y','n'])
       if user_choice == 'y'
-        setup_configuration()
+        configuration_data.merge!(setup_configuration())
       end
     end while user_choice == 'y'
+    
+    # Step (6)
+    if File.exists?('config/database.yml')
+      File.delete('config/database.yml')
+    end
+    File.open('config/database.yml', "w") do |f|
+      f.write(yaml(configuration_data))
+    end
   end
 end
