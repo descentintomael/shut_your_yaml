@@ -5,6 +5,11 @@ namespace :db do
     # Local variables
     configuration_data = {}
     
+    # Templates for standard configurations
+    # TODO: Some of these variables like socket are dependent on which OS is being used, need to add in functionality to auto-set that correctly
+    # TODO: Need to research production db configurations to see if they are any different.
+    template_configs = {"SQLite" =>  {"adapter" => "sqlite3", "database" => "db/development.sqlite3", "pool" => "5", "timeout" => "5000"}, "MySQL" =>  {"adapter" => "mysql2", "encoding" => "utf8", "database" => "blog_development", "pool" => "5", "username" => "root", "password" => "", "socket" => "/tmp/mysql.sock"}, "PostgreSQL" =>  {"adapter" => "postgresql", "encoding" => "unicode", "database" => "blog_development", "pool" => "5", "username" => "blog", "password" => ""}, "JRuby SQLite" =>  {"adapter" => "jdbcsqlite3", "database" => "db/development.sqlite3"}, "JRuby MySQL" =>  {"adapter" => "jdbcmysql", "database" => "blog_development", "username" => "root", "password" => ""}, "JRuby PostgreSQL" =>  {"adapter" => "jdbcpostgresql", "encoding" => "unicode", "database" => "blog_development", "username" => "blog", "password" => ""}}
+    
     # Required functions
     # Function for getting the user's input choice and repeating until the user enters a valid choice
     # TODO: consider making the input case insensitive
