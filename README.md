@@ -11,14 +11,14 @@ individual fields.
 
 Getting Started
 ---------------
-# Clone the repo
+1. Clone the repo
     git clone git://github.com/descentintomael/shut_your_yaml.git
-# Link it into your rails app
+2. Link it into your rails app
     cd shut_your_yaml
     ln -s shut_your_yaml.rake /path/to/your/rails/app/syy.rake
-# Run rake to process it
+3. Run rake to process it
     rake -f syy.rake db:config
-# Follow the on screen prompts to complete the database configuration
+4. Follow the on screen prompts to complete the database configuration
 
 TODO
 ----
