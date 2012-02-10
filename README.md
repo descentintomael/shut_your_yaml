@@ -12,17 +12,25 @@ individual fields.
 Getting Started
 ---------------
 1. Clone the repo
+    
     git clone git://github.com/descentintomael/shut_your_yaml.git
+    
 2. Link it into your rails app
+    
     cd shut_your_yaml
+    
     ln -s shut_your_yaml.rake /path/to/your/rails/app/syy.rake
+    
 3. Run rake to process it
+    
     rake -f syy.rake db:config
+    
 4. Follow the on screen prompts to complete the database configuration
 
 TODO
 ----
 The following still needs to be completed.  See comments in the code for any I missed here.
+
 * Create a backup of the database.yml file before deleting or modifying it
 * Add that backup to the .gitignore or some place outside the Rails app
 * Add in OS dependent variables (such as the MySQL socket path)
