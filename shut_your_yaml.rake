@@ -20,7 +20,7 @@ namespace :db do
       # Loop until the user enters something valid
       begin
         print "Please enter your choice [#{allowed_input.join(' ')}]: "
-        user_input = gets
+        user_input = STDIN.gets
         # Remove the white space
         user_input.chomp!
       end while not allowed_input.include? user_input
@@ -44,7 +44,7 @@ namespace :db do
       if !name.instance_of? String or name.empty?
         print "Please enter the name of this database environment: "
         begin
-          name = gets
+          name = STDIN.gets
           name.chomp!
         end while name.empty?
       end
@@ -63,8 +63,8 @@ namespace :db do
           # User wants to edit the configuration row by row
           current_config.each do |key,val|
             print "Current val for #{key} is #{val}. Press [Enter] to keep or type in your val: "
-            new_val = gets
-            new_val = val if new_val == "\n"
+            new_val = STDIN.gets
+            new_val = val.to_s if new_val == "\n"
             current_config.merge!({key => new_val.chomp})
           end
           # Ask the user if they'd like to add more values
@@ -74,11 +74,11 @@ namespace :db do
             
             if continue_choice == 'y'
               print "Please enter a name for the val: "
-              key = gets
+              key = STDIN.gets
               key.chomp!
               if !key.empty?
                 print "Please enter a value: "
-                val = gets
+                val = STDIN.gets
                 current_config.merge!({key => val.chomp})
               end
             end
@@ -114,7 +114,7 @@ namespace :db do
             # User wants to edit the configuration row by row
             current_config.each do |key,val|
               print "Current val for #{key} is #{val}. Press [Enter] to keep or type in your val: "
-              new_val = gets
+              new_val = STDIN.gets
               new_val = val if new_val == "\n"
               current_config.merge!({key => new_val.chomp})
             end
@@ -125,11 +125,11 @@ namespace :db do
 
               if continue_choice == 'y'
                 print "Please enter a name for the val: "
-                key = gets
+                key = STDIN.gets
                 key.chomp!
                 if !key.empty?
                   print "Please enter a value: "
-                  val = gets
+                  val = STDIN.gets
                   current_config.merge!({key => val.chomp})
                 end
               end
@@ -139,11 +139,11 @@ namespace :db do
           # User wants a custom configuration
           begin
             print "What do you want the name for the first val to be? "
-            key = gets
+            key = STDIN.gets
             key.chomp!
           end while key.empty?
           print "and the value? "
-          val = gets
+          val = STDIN.gets
           current_config.merge!({key => val.chomp})
           
           # Ask the user if they'd like to add more values
@@ -153,11 +153,11 @@ namespace :db do
 
             if continue_choice == 'y'
               print "Please enter a name for the val: "
-              key = gets
+              key = STDIN.gets
               key.chomp!
               if !key.empty?
                 print "Please enter a value: "
-                val = gets
+                val = STDIN.gets
                 current_config.merge!({key => val.chomp})
               end
             end
@@ -225,10 +225,65 @@ namespace :db do
     
     # Step (3)
     if not configuration_data.empty?
-      configuration_data.each do |config|
-        puts config.first
+      configuration_data.each_key do |key| 
+        begin
+          puts "Current configuration contains the environment #{key}, what would you like to do with this environment?"
+          puts "1) Edit it"
+          puts "2) Delete it"
+          puts "3) View it"
+          puts "4) Skip it"
+          user_choice = get_user_input((1..4).to_a)
+          
+          if user_choice.to_i == 1
+            # User wants to edit this configuration
+            setup_configuration(key, configuration_data[key])
+          elsif user_choice.to_i == 2
+            # User wants to delete this configuration
+            configuration_data.delete(key)
+          elsif user_choice.to_i == 3
+            # User wants to view this configuration
+            puts "Environment #{key}"
+            configuration_data[key].each { |config_key, config_val| puts "\t#{config_key}: #{config_val}" }
+          end
+        end while user_choice == "3"
       end
     end
-      
+    
+    # Step (4)
+    if !configuration_data.has_key? "development"
+      # configuration doesn't have the development environment, suggest adding it
+      puts "The configuration doesn't have a development environment, would you like to add it?"
+      user_choice = get_user_input(['y','n'])
+      if user_choice == 'y'
+        setup_configuration("development", {})
+      end
+    end
+    
+    if !configuration_data.has_key? "test"
+      # configuration doesn't have the test environment, suggest adding it
+      puts "The configuration doesn't have a test environment, would you like to add it?"
+      user_choice = get_user_input(['y','n'])
+      if user_choice == 'y'
+        setup_configuration("test", {})
+      end
+    end
+    
+    if !configuration_data.has_key? "production"
+      # configuration doesn't have the production environment, suggest adding it
+      puts "The configuration doesn't have a production environment, would you like to add it?"
+      user_choice = get_user_input(['y','n'])
+      if user_choice == 'y'
+        setup_configuration("development", {})
+      end
+    end
+    
+    # Step (5)
+    begin
+      puts "Would you like to add another configuration environment?"
+      user_choice = get_user_input(['y','n'])
+      if user_choice == 'y'
+        setup_configuration()
+      end
+    end while user_choice == 'y'
   end
 end
